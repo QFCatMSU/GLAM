@@ -2,12 +2,9 @@
 #' 
 #' @description 
 #' 
-#' @param data list of data
 #' @param pars list of parameters
 #' 
-
-run_glam = function(data,
-                    pars) {
+run_glam = function(pars) {
   ## Table of Contents
   # 0. Data inputs and parameters
   # 1. Growth and Eggs
@@ -108,11 +105,17 @@ run_glam = function(data,
   ## 3. Mortalities ####
   # Mortalities
   M = exp(ln_M) # natural mortality
+  # natural mortality from sea lamprey
+  if ("M_lamprey" %in% names(data) == FALSE) {
+    M_lamprey = 0
+  } else {
+    M_lamprey = M_lamprey * M_lamprey_mult
+  }
   FM_trap = q_trap * obs_eff_trap * sel_trap # fishing mortality for trap nets
   FM_gill = q_gill * obs_eff_gill * sel_gill # fishing mortality for gill nets
   FM_tot = FM_trap + FM_gill # total fishing mortality
-  Z = FM_tot + M # total mortality
-  MD = Z + (-FM_tot)
+  Z = FM_tot + M + M_lamprey # total mortality
+  MD = Z + (-FM_tot) + (-M_lamprey)
   S = exp(-Z)
   S0 = matrix(exp(-M), nrow = n_years, ncol = n_ages) #  survival
   A = 1 - S
@@ -154,7 +157,8 @@ run_glam = function(data,
   pa_gill = ct_gill / (ct_gill_tot + 0.001) # proportions at age - gill net
   biomass_gill = mn_wt_gill * ct_gill
   mdead = (MD / Z) * (nage * (1 - exp(-Z))) # total number dead due to natural causes
-  tdead = mdead + ct_trap + ct_gill # total numbers killed
+  sldead = (M_lamprey / Z) * (nage * (1 - exp(-Z))) # total number dead due to sea lamprey
+  tdead = mdead + sldead + ct_trap + ct_gill # total numbers killed
 
 
   ## 5. Projected Values ####
