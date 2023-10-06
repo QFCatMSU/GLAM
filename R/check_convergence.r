@@ -14,14 +14,15 @@ check_convergence = function(
     model_res) {
   res = list()
   res$convergence = model_res$convergence
-  res$max_gradient = max(abs(obj_fn$gr(opt$par)))
+  res$max_gradient = max(abs(obj_fn$gr(model_res$par)))
 
   if (res$convergence == 1) {
     print(res$convergence)
-    stop("Model did not converge!")
+    message("Model did not converge!")
   }
   if (res$max_gradient > 0.001) {
-    print(obj_fn$gr(obj_fn$env$last.par.best))
+    gr = cbind(names(obj_fn$env$last.par.best), c(obj_fn$gr(obj_fn$env$last.par.best)))
+    print(gr[which(as.numeric(gr[,2]) > 0.001),])
     stop("Gradients are high, please improve optimization!")
   }
   # look at fixed estimated parameters
@@ -60,7 +61,7 @@ check_convergence = function(
     message("Model diagnostics consistent with convergence.")
     res <- list()
     res$convergence = model_res$convergence
-    res$max_gradient = max(abs(obj_fn$gr(opt$par)))
+    res$max_gradient = max(abs(obj_fn$gr(model_res$par)))
     res$message = "Good to go!"
   }
     return(res)
