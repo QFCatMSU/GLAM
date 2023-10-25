@@ -1,4 +1,18 @@
-prep_glam_data = function(model_name = "GLAM",
+#' @title prep_glam_data
+#' 
+#' @description converts data from Excel to R, needs to be in certain format (followed B. Rook's data sheet - MI4_LWF_DAT_10_23_2023)
+#' 
+#' @param model_name name of model run
+#' @param data_file_name name of Excel sheet with data (must include all sheets - in_singles, in_watage, in_latage, in_mat, in_other, in_obs_pat/g/r)
+#' @param sel_type_trap selectivity function ("logistic" or "lognormal") for trapnet fleet
+#' @param gill_fleet TRUE if gillnet fleet in model
+#' @param rec_fleet TRUE if recreational fleet in model
+#' @param pauly_M calculate M from Pauly equation (needs parameters h2o_t, linf, and vbk - incorporate in in_singles Excel sheet)
+#' @param M_init initial M estimate if not using Pauly's M
+#' @param recruit_model recruitment function ("AR1" - autoregressive)
+#' 
+
+prep_glam_data = function(model_name = "GLAM", 
                           data_file_name,
                           # fleet_num = 1,
                           sel_type_trap = "logistic",

@@ -1,6 +1,6 @@
 #' @title rename_data
 #'
-#' @description converts data from Excel to R, needs to be in certain format (followed B. Rook's data sheet - MI4_LWF_DAT_10_23_2023)
+#' @description converts names of data vectors/matrices from ADMB to RTMB version (followed B. Rook's data sheet - MI4_LWF_DAT_10_23_2023)
 #'
 #' @param data data from excel that includes all the sheets (this is extracted in prep_glam_input.r)
 #'
