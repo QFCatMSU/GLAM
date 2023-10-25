@@ -18,10 +18,25 @@ glam = function(pars) {
 
   ## 0. Data inputs and parameters ####
   getAll(data, pars)
+  ages = fage:lage
+  years = fyear:lyear
   # adjustments to effort and catch
-  obs_eff_gill = obs_eff_gill * eff_gill_adj
   obs_ct_trap = (biomass_trap / mn_wt_trap) / harv_trap_adj
-  obs_ct_gill = (biomass_gill / mn_wt_gill) / harv_gill_adj
+  # gillnet fleet
+  if (gill_fleet) {
+    if ("eff_gill_adj" %in% names(data)) obs_eff_gill = obs_eff_gill * eff_gill_adj
+    obs_ct_gill = (biomass_gill / mn_wt_gill) / harv_gill_adj
+  } else {
+    obs_eff_gill = 0
+    obs_ct_gill = 0
+  }
+  # recreational fleet
+  if (rec_fleet) {
+    obs_ct_rec = obs_ct_rec / harv_rec_adj
+  } else {
+    obs_eff_rec = 0
+    obs_ct_rec = 0
+  }
 
 
   ## 1. Growth and Eggs ####
@@ -67,53 +82,111 @@ glam = function(pars) {
 
   ## 2. Selectivity and Catchability ####
   # Selectivity
-  # random walk
   sel_trap_dev = exp(log_sel_trap_p1)
-  sel_gill_dev = exp(log_sel_gill_p1)
-  for (y in 2:n_years) {
-    sel_trap_dev[y] = exp(log(sel_trap_dev[y - 1]) + log_sel_trap_dev[y - 1])
-    sel_gill_dev[y] = exp(log(sel_gill_dev[y - 1]) + log_sel_gill_dev[y - 1])
+  if ("log_sel_trap_dev" %in% names(pars)) {
+    for (y in 2:n_years) {
+      sel_trap_dev[y] = exp(log(sel_trap_dev[y - 1]) + log_sel_trap_dev[y - 1])
+    }
   }
-  sel_trap_p2 = exp(log_sel_trap_p2)
-  sel_gill_p2 = exp(log_sel_gill_p2)
+  # Gillnet fleet
+  if (gill_fleet) {
+    sel_gill_dev = exp(log_sel_gill_p1)
+    sel_gill_p2 = exp(log_sel_gill_p2)
+    if ("log_sel_gill_dev" %in% names(pars)) {
+      for (y in 2:n_years) {
+        sel_gill_dev[y] = exp(log(sel_gill_dev[y - 1]) + log_sel_gill_dev[y - 1])
+      }
+    }
+  }
+  # recreational fleet
+  if (rec_fleet) {
+    sel_rec_dev = exp(log_sel_gill_p1)
+    sel_rec_p2 = exp(log_sel_gill_p2)
+  }
 
-  # logistic selectivity for trap nets
-  # lognormal selectivity for gill nets
   sel_trap = matrix(0, nrow = n_years, ncol = n_ages)
   sel_gill = matrix(0, nrow = n_years, ncol = n_ages)
+  sel_rec = matrix(0, nrow = n_years, ncol = n_ages)
   for (y in 1:n_years) {
-    # trap net
-    sel_trap[y, ] = 1 / (1 + exp(-sel_trap_p2 * (la[y, ] - sel_trap_dev[y]))) /
-      (1 / (1 + exp(-sel_trap_p2 * (ref_len_trap - sel_trap_dev[y]))))
+    # trapnet
+    if (sel_type_trap == "lognormal") {
+      if (length(sel_trap_dev) > 1) {
+        sel_trap[y, ] = 1 / (sqrt(2 * pi) * sel_trap_dev[y] * la[y, ]) *
+          exp(-((log(la[y, ]) - sel_trap_p2)^2) / (2 * sel_trap_dev[y]^2)) /
+          (1 / (sqrt(2 * pi) * sel_trap_dev[y] * ref_len_trap) *
+            exp(-((log(ref_len_trap) - sel_trap_p2)^2) / (2 * sel_trap_dev[y]^2)))
+      } else {
+        sel_trap[y, ] = 1 / (sqrt(2 * pi) * sel_trap_dev * la[y, ]) *
+          exp(-((log(la[y, ]) - sel_trap_p2)^2) / (2 * sel_trap_dev^2)) /
+          (1 / (sqrt(2 * pi) * sel_trap_dev * ref_len_trap) *
+            exp(-((log(ref_len_trap) - sel_trap_p2)^2) / (2 * sel_trap_dev^2)))
+      }
+    } else {
+      if (length(sel_trap_dev) > 1) {
+        sel_trap[y, ] = 1 / (1 + exp(-sel_trap_p2 * (la[y, ] - sel_trap_dev[y]))) /
+          (1 / (1 + exp(-sel_trap_p2 * (ref_len_trap - sel_trap_dev[y]))))
+      } else {
+        sel_trap[y, ] = 1 / (1 + exp(-sel_trap_p2 * (la[y, ] - sel_trap_dev))) /
+          (1 / (1 + exp(-sel_trap_p2 * (ref_len_trap - sel_trap_dev))))
+      }
+    }
     # gill net
-    sel_gill[y, ] = 1 / (sqrt(2 * pi) * sel_gill_dev[y] * la[y, ]) *
-      exp(-((log(la[y, ]) - sel_gill_p2)^2) / (2 * sel_gill_dev[y]^2)) /
-      (1 / (sqrt(2 * pi) * sel_gill_dev[y] * ref_len_gill) *
-        exp(-((log(ref_len_gill) - sel_gill_p2)^2) / (2 * sel_gill_dev[y]^2)))
+    if (gill_fleet) {
+      if (length(sel_gill_dev) > 1) {
+        sel_gill[y, ] = 1 / (sqrt(2 * pi) * sel_gill_dev[y] * la[y, ]) *
+          exp(-((log(la[y, ]) - sel_gill_p2)^2) / (2 * sel_gill_dev[y]^2)) /
+          (1 / (sqrt(2 * pi) * sel_gill_dev[y] * ref_len_gill) *
+            exp(-((log(ref_len_gill) - sel_gill_p2)^2) / (2 * sel_gill_dev[y]^2)))
+      } else {
+        sel_gill[y, ] = 1 / (sqrt(2 * pi) * sel_gill_dev * la[y, ]) *
+          exp(-((log(la[y, ]) - sel_gill_p2)^2) / (2 * sel_gill_dev^2)) /
+          (1 / (sqrt(2 * pi) * sel_gill_dev * ref_len_gill) *
+            exp(-((log(ref_len_gill) - sel_gill_p2)^2) / (2 * sel_gill_dev^2)))
+      }
+    }
+    # rec fleet
+    if (rec_fleet) {
+      sel_rec[y, ] = 1 / (1 + exp(-log_sel_rec_p2 * (la[y, ] - log_sel_rec_dev))) /
+        (1 / (1 + exp(-log_sel_rec_p2 * (ref_len_rec - log_sel_rec_dev))))
+    }
   }
 
   # Catchability
-  # random walk
   q_trap = exp(log_q_trap)
-  q_gill = exp(log_q_gill)
   for (y in 2:n_years) {
     q_trap[y] = exp(log(q_trap[y - 1]) + log_q_trap_dev[y - 1])
-    q_gill[y] = exp(log(q_gill[y - 1]) + log_q_gill_dev[y - 1])
+  }
+  if (gill_fleet) {
+    q_gill = exp(log_q_gill)
+    for (y in 2:n_years) {
+      q_gill[y] = exp(log(q_gill[y - 1]) + log_q_gill_dev[y - 1])
+    }
+  } else {
+    q_gill = 0
+  }
+  if (rec_fleet) {
+    q_rec = exp(log_q_rec)
+    for (y in 2:n_years) {
+      q_rec[y] = exp(log(q_rec[y - 1]) + log_q_rec_dev[y - 1])
+    }
+  } else {
+    q_rec = 0
   }
 
 
   ## 3. Mortalities ####
   # Mortalities
-  M = exp(ln_M) # natural mortality
+  M = exp(log_M) # natural mortality
   # natural mortality from sea lamprey
-  if ("M_lamprey" %in% names(data) == FALSE) {
-    M_lamprey = 0
-  } else {
+  if ("M_lamprey" %in% names(data)) {
     M_lamprey = M_lamprey * M_lamprey_mult
+  } else {
+    M_lamprey = 0
   }
   FM_trap = q_trap * obs_eff_trap * sel_trap # fishing mortality for trap nets
   FM_gill = q_gill * obs_eff_gill * sel_gill # fishing mortality for gill nets
-  FM_tot = FM_trap + FM_gill # total fishing mortality
+  FM_rec = q_rec * obs_eff_rec * sel_rec
+  FM_tot = FM_trap + FM_gill + FM_rec # total fishing mortality
   Z = FM_tot + M + M_lamprey # total mortality
   MD = Z + (-FM_tot) + (-M_lamprey)
   S = exp(-Z)
@@ -128,19 +201,15 @@ glam = function(pars) {
   log_recr[1] = log_recr_init
   nage = matrix(0, nrow = n_years, ncol = n_ages)
   nage[1, 1] = exp(log_recr_init)
-  nage[1, 2:n_ages] = exp(log_pop_init)
+  nage[1, 2:(length(log_pop_init) + 1)] = exp(log_pop_init)
 
   for (y in 2:n_years) {
-    # if(recr_mode == "AR1"){
-    # ** kept this same way as in ADMB version but should change this
     log_recr[y] = log_recr_avg + tanh(acor) * (log_recr[y - 1] - log_recr_avg) + log_recr_dev[y - 1]
     log_recr[n_years] = log_recr[n_years - 1]
-    # }
     nage[y, 1] = exp(log_recr[y])
     for (a in 2:n_ages) {
       nage[y, a] = nage[y - 1, a - 1] * exp(-Z[y - 1, a - 1])
     }
-    # nage[y, 2:n_ages] = nage[y - 1, 1:(n_ages - 1)] * exp(-Z[y - 1, 1:(n_ages - 1)])
     nage[y, n_ages] = nage[y, n_ages] + nage[y - 1, n_ages] * exp(-Z[y - 1, n_ages])
   }
 
@@ -148,14 +217,29 @@ glam = function(pars) {
   nage_spawn = per_fem * nage * S_spawn # number of spawners at time of spawning
   biomass = nage * pop_wa # predicted biomass
   sp_biomass = nage_spawn * wt_fac # predicted spawning biomass
+  # trapnet fleet
   ct_trap = (FM_trap / Z) * (nage * (1 - S)) # Baranov catch equation - trap net
   ct_trap_tot = rowSums(ct_trap) # catch summed across ages - trap net
   pa_trap = ct_trap / (ct_trap_tot + 0.001) # proportions at age - trap net
   biomass_trap = mn_wt_trap * ct_trap
-  ct_gill = (FM_gill / Z) * (nage * (1 - S)) # Baranov catch equation - gill net
-  ct_gill_tot = rowSums(ct_gill) # catch summed across ages - gill net
-  pa_gill = ct_gill / (ct_gill_tot + 0.001) # proportions at age - gill net
-  biomass_gill = mn_wt_gill * ct_gill
+  # gillnet fleet
+  if (gill_fleet) {
+    ct_gill = (FM_gill / Z) * (nage * (1 - S)) # Baranov catch equation - gill net
+    ct_gill_tot = rowSums(ct_gill) # catch summed across ages - gill net
+    pa_gill = ct_gill / (ct_gill_tot + 0.001) # proportions at age - gill net
+    biomass_gill = mn_wt_gill * ct_gill
+  } else {
+    ct_gill = ct_gill_tot = pa_gill = biomass_gill = 0
+  }
+  # recreational fleet
+  if (rec_fleet) {
+    ct_rec = (FM_rec / Z) * (nage * (1 - S)) # Baranov catch equation - rec net
+    ct_rec_tot = rowSums(ct_rec) # catch summed across ages - rec net
+    pa_rec = ct_rec / (ct_rec_tot + 0.001) # proportions at age - rec net
+    biomass_rec = mn_wt_rec * ct_rec
+  } else {
+    ct_rec = ct_rec_tot = pa_rec = biomass_rec = 0
+  }
   mdead = (MD / Z) * (nage * (1 - exp(-Z))) # total number dead due to natural causes
   sldead = (M_lamprey / Z) * (nage * (1 - exp(-Z))) # total number dead due to sea lamprey
   tdead = mdead + sldead + ct_trap + ct_gill # total numbers killed
@@ -247,15 +331,20 @@ glam = function(pars) {
 
 
   ## 7. Objective Function ####
-  # ** - maybe rewrite these
-  # Rho approach for variances
+   # Rho approach for variances
   sig = exp(log_sig) # back transform sigma
   sd_recr = sig * rho_recr
   sd_ct_trap = sig * rho_ct_trap
-  sd_ct_gill = sig * rho_ct_gill
-  sd_eff_trap = sig * rho_eff_trap
-  sd_eff_gill = sig * rho_eff_gill
-  sd_sel = sig * rho_sel
+  sd_q_trap = sig * rho_q_trap
+  if ("rho_sel" %in% names(data)) sd_sel = sig * rho_sel
+  if (gill_fleet) {
+    sd_ct_gill = sig * rho_ct_gill
+    sd_q_gill = sig * rho_q_gill
+  }
+  if (rec_fleet) {
+    sd_ct_rec = sig * rho_ct_rec
+    sd_q_rec = sig * rho_q_rec
+  }
   # Objective functions
   nlp = 0 # components related to priors and process error
   nll = 0 # components related to data and observation error
@@ -265,6 +354,7 @@ glam = function(pars) {
   # penalty on natural mortality
   nlp = nlp + (0.5 / sd_M^2 * (ln_M_init - ln_M)^2 + log(sd_M))
 
+  # Trapnet
   # likelihood on observed catch - trap net
   nll = nll + 0.5 / sd_ct_trap^2 * sum(log((0.01 + obs_ct_trap) / (0.01 + ct_trap_tot))^2) + (years[n_years] - years[1] + 1) * log(sd_ct_trap)
   # likelihood on catchability - trap net - ** change eff -> q ??
@@ -272,16 +362,31 @@ glam = function(pars) {
   # likelihood on age composition - trap net - multinomial
   nll = nll - sum(ess_trap * obs_pa_trap * log(0.0001 + pa_trap))
   # random walk for selectivity - trap net
-  nlp = nlp + (0.5 / sd_sel^2 * sum(log_sel_trap_dev^2) + (length(log_sel_trap_dev) - 1) * log(sd_sel))
+  if ("log_sel_trap_dev" %in% names(pars)) nlp = nlp + (0.5 / sd_sel^2 * sum(log_sel_trap_dev^2) + (length(log_sel_trap_dev) - 1) * log(sd_sel))
 
-  # likelihood on observed catch - gill net
-  nll = nll + (0.5 / sd_ct_gill^2 * sum(log((0.01 + obs_ct_gill) / (0.01 + ct_gill_tot))^2) + (years[n_years] - years[1] + 1) * log(sd_ct_gill))
-  # likelihood on catchability - gill net
-  nlp = nlp + (0.5 / sd_eff_gill^2 * sum(log_q_gill_dev^2) + (length(log_q_gill_dev) - 1) * log(sd_eff_gill))
-  # likelihood on age composition - gill net - multinomial
-  nll = nll - sum(ess_gill * obs_pa_gill * log(0.0001 + pa_gill))
-  # random walk for selectivity - gill net
-  nlp = nlp + (0.5 / sd_sel^2 * sum(log_sel_gill_dev^2) + (length(log_sel_gill_dev) - 1) * log(sd_sel))
+  # gillnet
+  if (gill_fleet) {
+    # likelihood on observed catch - gill net
+    nll = nll + (0.5 / sd_ct_gill^2 * sum(log((0.01 + obs_ct_gill) / (0.01 + ct_gill_tot))^2) + (years[n_years] - years[1] + 1) * log(sd_ct_gill))
+    # likelihood on catchability - gill net
+    nlp = nlp + (0.5 / sd_q_gill^2 * sum(log_q_gill_dev^2) + (length(log_q_gill_dev) - 1) * log(sd_q_gill))
+    # likelihood on age composition - gill net - multinomial
+    nll = nll - sum(ess_gill * obs_pa_gill * log(0.0001 + pa_gill))
+    # random walk for selectivity - gill net
+    if ("log_sel_gill_dev" %in% names(pars)) nlp = nlp + (0.5 / sd_sel^2 * sum(log_sel_gill_dev^2) + (length(log_sel_gill_dev) - 1) * log(sd_sel))
+  }
+
+  # rec fleet
+  if (rec_fleet) {
+    # likelihood on observed catch - rec fleet
+    nll = nll + (0.5 / sd_ct_rec^2 * sum(log((0.01 + obs_ct_rec) / (0.01 + ct_rec_tot))^2) + (years[n_years] - years[1] + 1) * log(sd_ct_rec))
+    # likelihood on catchability - rec fleet
+    nlp = nlp + (0.5 / sd_q_rec^2 * sum(log_q_rec_dev^2) + (length(log_q_rec_dev) - 1) * log(sd_q_rec))
+    # likelihood on age composition - rec fleet - multinomial
+    nll = nll - sum(ess_rec * obs_pa_rec * log(0.0001 + pa_rec))
+    # random walk for selectivity - rec fleet
+    if ("log_sel_rec_dev" %in% names(pars)) nlp = nlp + (0.5 / sd_sel^2 * sum(log_sel_rec_dev^2) + (length(log_sel_rec_dev) - 1) * log(sd_sel))
+  }
 
   # recruitment deviations
   # AR(1)
