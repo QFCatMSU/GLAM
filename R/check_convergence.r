@@ -18,7 +18,7 @@ check_convergence = function(
   final_gradient = obj_fn$gr(model_res$par)
 
   if (res$convergence == 1) {
-    message("Model did not converge!")
+    message("Model did not converge! (ノಠ益ಠ)ノ彡 ┻━┻")
   }
   if (res$max_gradient > 0.001) {
     res$whichbad_params = data.frame(
@@ -27,7 +27,7 @@ check_convergence = function(
       gradient = as.numeric(final_gradient),
       parameter_check = c(ifelse(as.numeric(final_gradient) > 0.001, "Bad", "OK"))
     )
-    message("Gradients are high, please improve optimization!")
+    message("Gradients are high, please improve optimization! (ノಠ益ಠ)ノ彡 ┻━┻")
     return(res)
   } else {
     res$whichbad_params = "All parameter gradients look good!"
@@ -41,7 +41,7 @@ check_convergence = function(
   # extract parameters and uncertainty
   res$Hess = optimHess(par = fixed_obj, fn = obj_fn$fn, gr = obj_fn$gr)
   if (is.nan(max(res$Hess))) {
-    res$hess_status = "The hessian was not invertible"
+    res$hess_status = "The hessian was not invertible. (ノಠ益ಠ)ノ彡 ┻━┻"
   } else {
     res$eigen = eigen(res$Hess)
     res$whichbad_eigen = which(res$eigen$values < sqrt(.Machine$double.eps))
