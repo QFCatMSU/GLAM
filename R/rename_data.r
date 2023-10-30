@@ -61,11 +61,16 @@ rename_data = function(data) {
 
   names_temp = params_list |>
     filter(old %in% colnames(in_singles))
+  names_temp2 <- NULL
   in_singles = in_singles |>
-    rename_if(colnames(in_singles) %in% names_temp$old, ~ names_temp$new) |>
     select_if(colnames(in_singles) %in% names_temp$old)
+  for(j in 1:ncol(in_singles)){
+    if(names(in_singles[,j]) %in%  names_temp$old) names_temp2[j] = names_temp$new[names_temp$old %in% names(in_singles[,j])]
+  }
+  in_singles = in_singles |>
+    rename_if(colnames(in_singles) %in% names_temp$old, ~ names_temp2) 
   for (j in 1:ncol(in_singles)) {
-    output[[colnames(in_singles[j])]] = as.numeric(assign(colnames(in_singles[j]), get(colnames(in_singles[j]), in_singles)))
+    output[[colnames(in_singles[j])]] = assign(colnames(in_singles[j]), get(colnames(in_singles[j]), in_singles))
   }
 
   output$wa = as.matrix(in_watage[, -which(colnames(in_watage) == "year")])
@@ -74,9 +79,14 @@ rename_data = function(data) {
 
   names_temp = params_list |>
     filter(old %in% colnames(in_other))
+  names_temp2 <- NULL
   in_other = in_other |>
-    rename_if(colnames(in_other) %in% names_temp$old, ~ names_temp$new) |>
     select_if(colnames(in_other) %in% names_temp$old)
+  for(j in 1:ncol(in_other)){
+    if(names(in_other[,j]) %in%  names_temp$old) names_temp2[j] = names_temp$new[names_temp$old %in% names(in_other[,j])]
+  }
+  in_other = in_other |>
+    rename_if(colnames(in_other) %in% names_temp$old, ~ names_temp2) 
   for (j in 1:ncol(in_other)) {
     output[[colnames(in_other[j])]] = assign(colnames(in_other[j]), get(colnames(in_other[j]), in_other))
   }
