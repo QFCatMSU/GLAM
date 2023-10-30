@@ -83,6 +83,7 @@ glam = function(pars) {
   ## 2. Selectivity and Catchability ####
   # Selectivity
   sel_trap_dev = exp(log_sel_trap_p1)
+  sel_trap_p2 = exp(log_sel_trap_p2)
   if ("log_sel_trap_dev" %in% names(pars)) {
     for (y in 2:n_years) {
       sel_trap_dev[y] = exp(log(sel_trap_dev[y - 1]) + log_sel_trap_dev[y - 1])
@@ -357,8 +358,8 @@ glam = function(pars) {
   # Trapnet
   # likelihood on observed catch - trap net
   nll = nll + 0.5 / sd_ct_trap^2 * sum(log((0.01 + obs_ct_trap) / (0.01 + ct_trap_tot))^2) + (years[n_years] - years[1] + 1) * log(sd_ct_trap)
-  # likelihood on catchability - trap net - ** change eff -> q ??
-  nlp = nlp + (0.5 / sd_eff_trap^2 * sum(log_q_trap_dev^2) + length(log_q_trap_dev) * log(sd_eff_trap))
+  # likelihood on catchability - trap net 
+  nlp = nlp + (0.5 / sd_q_trap^2 * sum(log_q_trap_dev^2) + length(log_q_trap_dev) * log(sd_q_trap))
   # likelihood on age composition - trap net - multinomial
   nll = nll - sum(ess_trap * obs_pa_trap * log(0.0001 + pa_trap))
   # random walk for selectivity - trap net
