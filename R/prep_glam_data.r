@@ -75,8 +75,11 @@ prep_glam_data = function(model_name = "GLAM",
     if (is.null(data$obs_eff_rec)) stop("You indicated there is a recreational fleet (rec_fleet = TRUE), please add data for the recreational fleet!")
   }
 
+  data$model_name = model_name
   data$recruit_model = recruit_model
   data$sel_type_trap = sel_type_trap
+  data$gill_fleet = gill_fleet
+  data$rec_fleet = rec_fleet
 
   return(data)
 }

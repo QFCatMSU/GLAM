@@ -95,6 +95,7 @@ run_glam = function(nlminb_control = list(
 
   # export
   output = list()
+    output$model_name = data$model_name
     output$check = check # has all model convergence, gradient, and Hessian checks and messages, check this after model run
     output$report = model$report(res$par) # list of output from RTMB model
     output$params = df # parameter list with parameter names, estimates, and gradients

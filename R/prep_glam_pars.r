@@ -24,6 +24,7 @@
 #' @param log_recr_avg log scale average recruitment
 #' @param log_recr_dev log scale recruitment deviations
 #' @param acor autocorrelation for recruitment deviations
+#' 
 
 prep_glam_pars = function(log_sig,
                         log_M,
@@ -48,8 +49,14 @@ prep_glam_pars = function(log_sig,
                         log_recr_dev,
                         acor
                         ){
+    if (!"tidyverse" %in% rownames(installed.packages())) {
+        install.packages("tidyverse")
+    }
+    require(tidyverse)
+    
     pars = as.list(match.call())
     pars = pars |> discard(is.null)
     pars = pars[!names(pars) == ""]
+    pars = lapply(pars, function(x) eval.parent(x))
     return(pars)
 }
