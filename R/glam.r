@@ -1,11 +1,12 @@
-#' @title glam
+#'@title glam
 #' 
-#' @description 
+#' @description Great Lakes Assessment Model
 #' 
 #' @param pars list of parameters
 #' 
+
 glam = function(pars) {
-  ## Table of Contents
+  ## Table of Contents 
   # 0. Data inputs and parameters
   # 1. Growth and Eggs
   # 2. Selectivity and Catchability
@@ -38,7 +39,6 @@ glam = function(pars) {
     obs_ct_rec = 0
   }
 
-
   ## 1. Growth and Eggs ####
   # instantaneous growth rates from weight at age matrix
   g_mat = matrix(NA, nrow = n_years, ncol = n_ages)
@@ -52,8 +52,7 @@ glam = function(pars) {
   g_mat[n_years, ] = g_mat[n_years - 1, ] # last year equivalent to second to last year
 
   # Weight at age calculations
-  # population weight at age in the beginning of the year at the time of spawning
-  # and time of harvest (assumes harvest occur halfway through year)
+  # population weight at age in the beginning of the year at the time of spawning, and time of harvest (assumes harvest occur halfway through year)
   pop_wa = spawn_wa = matrix(0, nrow = n_years, ncol = n_ages)
   pop_wa[1, ] = wa[1, 2:(n_ages + 1)] * exp(-0.5 * g_mat[1, ])
   for (y in 1:(n_years - 1)) {
@@ -332,7 +331,7 @@ glam = function(pars) {
 
 
   ## 7. Objective Function ####
-   # Rho approach for variances
+  # Rho approach for variances
   sig = exp(log_sig) # back transform sigma
   sd_recr = sig * rho_recr
   sd_ct_trap = sig * rho_ct_trap
@@ -353,9 +352,8 @@ glam = function(pars) {
   # penalty on fishing mortality
   nlp = nlp + 1000 * log((avg_FM_tot + 0.000001) / 0.2)^2
   # penalty on natural mortality
-  nlp = nlp + (0.5 / sd_M^2 * (ln_M_init - ln_M)^2 + log(sd_M))
+  nlp = nlp + (0.5 / sd_M^2 * (log_M_init - log_M)^2 + log(sd_M))
 
-  # Trapnet
   # likelihood on observed catch - trap net
   nll = nll + 0.5 / sd_ct_trap^2 * sum(log((0.01 + obs_ct_trap) / (0.01 + ct_trap_tot))^2) + (years[n_years] - years[1] + 1) * log(sd_ct_trap)
   # likelihood on catchability - trap net 
@@ -364,7 +362,6 @@ glam = function(pars) {
   nll = nll - sum(ess_trap * obs_pa_trap * log(0.0001 + pa_trap))
   # random walk for selectivity - trap net
   if ("log_sel_trap_dev" %in% names(pars)) nlp = nlp + (0.5 / sd_sel^2 * sum(log_sel_trap_dev^2) + (length(log_sel_trap_dev) - 1) * log(sd_sel))
-
   # gillnet
   if (gill_fleet) {
     # likelihood on observed catch - gill net
@@ -376,7 +373,6 @@ glam = function(pars) {
     # random walk for selectivity - gill net
     if ("log_sel_gill_dev" %in% names(pars)) nlp = nlp + (0.5 / sd_sel^2 * sum(log_sel_gill_dev^2) + (length(log_sel_gill_dev) - 1) * log(sd_sel))
   }
-
   # rec fleet
   if (rec_fleet) {
     # likelihood on observed catch - rec fleet
@@ -388,10 +384,9 @@ glam = function(pars) {
     # random walk for selectivity - rec fleet
     if ("log_sel_rec_dev" %in% names(pars)) nlp = nlp + (0.5 / sd_sel^2 * sum(log_sel_rec_dev^2) + (length(log_sel_rec_dev) - 1) * log(sd_sel))
   }
-
   # recruitment deviations
   # AR(1)
-  nlp = nlp + (0.5 / sd_recr^2 * sum(log_recr_dev^2) + (length(log_recr_dev)-1) * log(sd_recr) +
+  nlp = nlp + (0.5 / sd_recr^2 * sum(log_recr_dev^2) + (length(log_recr_dev) - 1) * log(sd_recr) +
     0.5 * (1 - tanh(acor)^2) / sd_recr^2 * (log_recr_init - log_recr_avg)^2 +
     log(sqrt(sd_recr^2 / (1 - tanh(acor)^2))))
 
@@ -401,10 +396,17 @@ glam = function(pars) {
   ## 8. Report Section ####
   REPORT(sel_trap)
   REPORT(sel_gill)
+  REPORT(M)
+  REPORT(FM_trap)
+  REPORT(FM_gill)
+  REPORT(FM_tot)
+  REPORT(q_trap)
+  REPORT(q_gill)
   REPORT(ct_trap)
   REPORT(ct_gill)
   REPORT(pa_trap)
   REPORT(pa_gill)
+  REPORT(sp_biomass)
   REPORT(biomass_trap)
   REPORT(biomass_gill)
   REPORT(recr)
