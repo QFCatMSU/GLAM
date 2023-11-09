@@ -8,7 +8,6 @@
 #' @param bound_list ## ** not used right now
 #' @param report_sdrep use sdreport from TMB, get standard errors for parameters
 #' @param n_newton number of Newton steps (recommended max = 3)
-
 #' 
 #' @return list of model diagnostics related to convergence and gradients, model results, and parameter estimates
 #' 
@@ -93,11 +92,18 @@ run_glam = function(nlminb_control = list(
     }
   )
 
+  # convert matrices from report to tibble (incompatible with advector so need to do it out of function)
+  out_mat = model$report(res$par)$out_mat
+  out_mat = lapply(out_mat, "colnames<-", data$fage:data$lage)
+  out_mat = lapply(out_mat, "rownames<-", data$fyear:data$lyear)
+  out_mat = lapply(out_mat, as_tibble)
+
   # export
   output = list()
     output$model_name = data$model_name
     output$check = check # has all model convergence, gradient, and Hessian checks and messages, check this after model run
     output$report = model$report(res$par) # list of output from RTMB model
+    output$report$out_mat = out_mat
     output$params = df # parameter list with parameter names, estimates, and gradients
     output$sdrep = sdrep # sdreport output - parameter estimates and standard errors
     output$model = model # MakeADFun model/output

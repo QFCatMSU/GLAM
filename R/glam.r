@@ -394,39 +394,39 @@ glam = function(pars) {
 
 
   ## 8. Report Section ####
-  REPORT(sel_trap)
-  REPORT(sel_gill)
-  REPORT(M)
-  REPORT(FM_trap)
-  REPORT(FM_gill)
-  REPORT(FM_tot)
-  REPORT(q_trap)
-  REPORT(q_gill)
-  REPORT(ct_trap)
-  REPORT(ct_gill)
-  REPORT(pa_trap)
-  REPORT(pa_gill)
-  REPORT(sp_biomass)
-  REPORT(biomass_trap)
-  REPORT(biomass_gill)
-  REPORT(recr)
+  out = tibble(
+    years = years,
+    ct_trap = rowSums(ct_trap),
+    ct_gill = rowSums(ct_gill),
+    biomass_trap = rowSums(biomass_trap),
+    biomass_gill = rowSums(biomass_gill),
+    recr = recr,
+    sp_biomass = sp_biomass
+  )
+  out_mat = list(
+    sel_trap = sel_trap,
+    sel_gill = sel_gill,
+    pa_trap = pa_trap,
+    pa_gill = pa_gill
+  )
+  singles = list(
+    ssbr_proj = ssbr_proj,
+    ssbr_proj0 = ssbr_proj0,
+    ssbr_proj_t = ssbr_proj_t,
+    spr_proj_t = spr_proj_t,
+    spr_proj = spr_proj,
+    spr_annual = spr_annual,
+    ypr_proj = ypr_proj,
+    avg_FM_trap = avg_FM_trap,
+    avg_FM_gill = avg_FM_gill,
+    avg_FM_tot = avg_FM_tot,
+    avg_A = avg_A
+  )
 
-  # Reference points
-  REPORT(ssbr_proj)
-  REPORT(ssbr_proj0)
-  REPORT(ssbr_proj_t)
-  REPORT(spr_proj_t)
-  REPORT(spr_proj)
-  REPORT(spr_annual)
-  REPORT(ypr_proj)
-  REPORT(avg_FM_trap)
-  REPORT(avg_FM_gill)
-  REPORT(avg_FM_tot)
-  REPORT(avg_A)
-  # REPORT(avg_biomass_lbs)
-  # REPORT(avg_sp_biomass_lbs)
-
-  # Likelihoods
+  # Export
+  REPORT(out)
+  REPORT(out_mat)
+  REPORT(singles)
   REPORT(jnll)
   REPORT(nlp)
   REPORT(nll)
