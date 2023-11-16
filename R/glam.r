@@ -243,6 +243,8 @@ glam = function(pars) {
   mdead = (MD / Z) * (nage * (1 - exp(-Z))) # total number dead due to natural causes
   sldead = (M_lamprey / Z) * (nage * (1 - exp(-Z))) # total number dead due to sea lamprey
   tdead = mdead + sldead + ct_trap + ct_gill # total numbers killed
+  # Standardized residuals
+  # resid_ct_trap = (log(obs_ct_trap+0.001) + log(ct_trap+0.001))
 
 
   ## 5. Projected Values ####
@@ -394,16 +396,13 @@ glam = function(pars) {
 
 
   ## 8. Report Section ####
-  out = tibble(
-    years = years,
+  out = list(
     ct_trap = rowSums(ct_trap),
     ct_gill = rowSums(ct_gill),
     biomass_trap = rowSums(biomass_trap),
     biomass_gill = rowSums(biomass_gill),
     recr = recr,
-    sp_biomass = sp_biomass
-  )
-  out_mat = list(
+    sp_biomass = rowSums(sp_biomass),
     sel_trap = sel_trap,
     sel_gill = sel_gill,
     pa_trap = pa_trap,
@@ -425,7 +424,6 @@ glam = function(pars) {
 
   # Export
   REPORT(out)
-  REPORT(out_mat)
   REPORT(singles)
   REPORT(jnll)
   REPORT(nlp)
