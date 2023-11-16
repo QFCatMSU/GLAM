@@ -6,7 +6,9 @@
 #' @param fixed_names names of fixed parameters that will go in map argument of MakeADFun
 #' @param rand_names ## ** not used right now
 #' @param bound_list ## ** not used right now
+#' @param hessian_run run nlminb with hessian
 #' @param report_sdrep use sdreport from TMB, get standard errors for parameters
+#' @param run_newton run Newton steps?
 #' @param n_newton number of Newton steps (recommended max = 3)
 #' 
 #' @return list of model diagnostics related to convergence and gradients, model results, and parameter estimates
@@ -20,7 +22,9 @@ run_glam = function(nlminb_control = list(
                     fixed_names = NULL,
                     # rand_names = NULL,
                     # bound_list = NULL,
+                    hessian_run = FALSE,
                     report_sdrep = TRUE,
+                    run_newton = TRUE,
                     n_newton = 3) {
   # mapping fixed parameters and removing bounds if parameter is fixed
   if (!is.null(fixed_names)) {
@@ -35,7 +39,6 @@ run_glam = function(nlminb_control = list(
 
   ## MakeADFun ####
   model = MakeADFun(func = glam, parameters = pars, map = fixed_list, hessian = TRUE, silent = TRUE)
-
   ## ** - will need to incorporate bounds and random effects later
 
   ## Run model ####
@@ -43,17 +46,20 @@ run_glam = function(nlminb_control = list(
     control = nlminb_control
   ))
 
+  # rerun with hessian
+  if(hessian_run){
+    res = try(nlminb(res$par, model$fn, model$gr, model$he,
+      control = list(abs.tol = 1e4)
+    ))
+  }
+
 
   ## Check model convergence and gradients ####
   # rerun model with Newton steps if gradients are bad
   final_gradient = model$gr(res$par)
   max_gradient = max(abs(final_gradient))
-  if (max_gradient < 0.001) {
-    n_newton_steps = 0
-  } else {
-    n_newton_steps = 1
-  }
-  if (n_newton_steps) {
+
+  if (run_newton) {
     tryCatch(
       for (n in 1:n_newton) {
         g = as.numeric(model$gr(res$par))
@@ -67,8 +73,10 @@ run_glam = function(nlminb_control = list(
     )
   }
 
+
   # look at convergence, gradients, Hessian
   check = check_convergence(obj_fn = model, model_res = res)
+  check$message = res$message
 
 
   ## Report ####
@@ -92,18 +100,11 @@ run_glam = function(nlminb_control = list(
     }
   )
 
-  # convert matrices from report to tibble (incompatible with advector so need to do it out of function)
-  out_mat = model$report(res$par)$out_mat
-  out_mat = lapply(out_mat, "colnames<-", data$fage:data$lage)
-  out_mat = lapply(out_mat, "rownames<-", data$fyear:data$lyear)
-  out_mat = lapply(out_mat, as_tibble)
-
   # export
   output = list()
     output$model_name = data$model_name
     output$check = check # has all model convergence, gradient, and Hessian checks and messages, check this after model run
     output$report = model$report(res$par) # list of output from RTMB model
-    output$report$out_mat = out_mat
     output$params = df # parameter list with parameter names, estimates, and gradients
     output$sdrep = sdrep # sdreport output - parameter estimates and standard errors
     output$model = model # MakeADFun model/output
