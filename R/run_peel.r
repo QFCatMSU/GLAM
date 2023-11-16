@@ -54,7 +54,7 @@ run_peel = function(peel,
   output = list(
     model_name = paste0(input$data$model_name, "_peel_", peel),
     peel_years = input$data$years,
-    report = res$report,
+    report = res$report$out,
     params = res$params
   )
 

@@ -406,7 +406,12 @@ glam = function(pars) {
     sel_trap = sel_trap,
     sel_gill = sel_gill,
     pa_trap = pa_trap,
-    pa_gill = pa_gill
+    pa_gill = pa_gill,    
+    M = M,
+    FM_trap = FM_trap,
+    FM_gill = FM_gill,
+    q_trap = q_trap,
+    q_gill = q_gill
   )
   singles = list(
     ssbr_proj = ssbr_proj,
