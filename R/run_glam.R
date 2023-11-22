@@ -38,17 +38,17 @@ run_glam = function(nlminb_control = list(
 
 
   ## MakeADFun ####
-  model = MakeADFun(func = glam, parameters = pars, map = fixed_list, hessian = TRUE, silent = TRUE)
+  obj = MakeADFun(func = glam, parameters = pars, map = fixed_list, hessian = TRUE, silent = TRUE)
   ## ** - will need to incorporate bounds and random effects later
 
   ## Run model ####
-  res = try(nlminb(model$par, model$fn, model$gr,
+  res = try(nlminb(obj$par, obj$fn, obj$gr,
     control = nlminb_control
   ))
 
   # rerun with hessian
   if(hessian_run){
-    res = try(nlminb(res$par, model$fn, model$gr, model$he,
+    res = try(nlminb(res$par, obj$fn, obj$gr, obj$he,
       control = list(abs.tol = 1e4)
     ))
   }
@@ -56,17 +56,17 @@ run_glam = function(nlminb_control = list(
 
   ## Check model convergence and gradients ####
   # rerun model with Newton steps if gradients are bad
-  final_gradient = model$gr(res$par)
+  final_gradient = obj$gr(res$par)
   max_gradient = max(abs(final_gradient))
 
   if (run_newton) {
     tryCatch(
       for (n in 1:n_newton) {
-        g = as.numeric(model$gr(res$par))
-        h = stats::optimHess(res$par, model$fn, model$gr) # Hessian matrix
+        g = as.numeric(obj$gr(res$par))
+        h = stats::optimHess(res$par, obj$fn, obj$gr) # Hessian matrix
         new_par = res$par - solve(h, g)
         # rewrite results
-        res = nlminb(new_par, model$fn, model$gr,
+        res = nlminb(new_par, obj$fn, obj$gr,
           control = list(eval.max = 1e4, iter.max = 1e4)
         )
       }, error = function(e) { err = conditionMessage(e) }
@@ -75,14 +75,14 @@ run_glam = function(nlminb_control = list(
 
 
   # look at convergence, gradients, Hessian
-  check = check_convergence(obj_fn = model, model_res = res)
+  check = check_convergence(obj_fn = obj, model_res = res)
   check$message = res$message
 
 
   ## Report ####
   # sdreport
   if (report_sdrep) {
-    sdrep = try(sdreport(model))
+    sdrep = try(sdreport(obj))
     sdrep = summary(sdrep)
   } else {
     sdrep = NULL
@@ -104,10 +104,10 @@ run_glam = function(nlminb_control = list(
   output = list()
     output$model_name = data$model_name
     output$check = check # has all model convergence, gradient, and Hessian checks and messages, check this after model run
-    output$report = model$report(res$par) # list of output from RTMB model
+    output$report = obj$report(res$par) # list of output from RTMB model
     output$params = df # parameter list with parameter names, estimates, and gradients
     output$sdrep = sdrep # sdreport output - parameter estimates and standard errors
-    output$model = model # MakeADFun model/output
+    output$obj = obj # MakeADFun obj/output
 
   return(output)
 }
