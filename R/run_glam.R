@@ -4,7 +4,7 @@
 #'
 #' @param nlminb_control
 #' @param fixed_names names of fixed parameters that will go in map argument of MakeADFun
-#' @param rand_names ## ** not used right now
+#' @param rand_names names of random parameters that will go into random argument of MakeADFun
 #' @param bound_list ## ** not used right now
 #' @param hessian_run run nlminb with hessian
 #' @param report_sdrep use sdreport from TMB, get standard errors for parameters
@@ -20,7 +20,7 @@ run_glam = function(nlminb_control = list(
                       trace = 0
                     ),
                     fixed_names = NULL,
-                    # rand_names = NULL,
+                    rand_names = NULL,
                     # bound_list = NULL,
                     hessian_run = FALSE,
                     report_sdrep = TRUE,
@@ -36,9 +36,13 @@ run_glam = function(nlminb_control = list(
     fixed_list = NULL
   }
 
+  if(!is.null(rand_names)){
+    if(hessian_run) message("Hessian not yet implemented for models with random effects, will not run with Hessian")
+    hessian_run = FALSE
+  }
 
   ## MakeADFun ####
-  obj = MakeADFun(func = glam, parameters = pars, map = fixed_list, hessian = TRUE, silent = TRUE)
+  obj = MakeADFun(func = glam, random = rand_names, parameters = pars, map = fixed_list, hessian = TRUE, silent = TRUE)
   ## ** - will need to incorporate bounds and random effects later
 
   ## Run model ####
@@ -104,7 +108,7 @@ run_glam = function(nlminb_control = list(
   output = list()
     output$model_name = data$model_name
     output$check = check # has all model convergence, gradient, and Hessian checks and messages, check this after model run
-    output$report = obj$report(res$par) # list of output from RTMB model
+    output$report = obj$report() # list of output from RTMB model
     output$params = df # parameter list with parameter names, estimates, and gradients
     output$sdrep = sdrep # sdreport output - parameter estimates and standard errors
     output$obj = obj # MakeADFun obj/output
