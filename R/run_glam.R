@@ -88,6 +88,11 @@ run_glam = function(nlminb_control = list(
   if (report_sdrep) {
     sdrep = try(sdreport(obj))
     sdrep = summary(sdrep)
+    sdcheck = sdrep[which(abs(sdrep[,1])*2 < sdrep[,2]),]
+    if(!is.null(sdcheck)) {
+      print("Standard errors for some parameter estimates are high, consider checking this!")
+      check$sdcheck = sdcheck
+    }
   } else {
     sdrep = NULL
   }
@@ -107,7 +112,7 @@ run_glam = function(nlminb_control = list(
   # export
   output = list()
     output$model_name = data$model_name
-    output$check = check # has all model convergence, gradient, and Hessian checks and messages, check this after model run
+    output$check = check # has all model convergence, gradient, Hessian checks and messages, and SE messages, check this after model run
     output$report = obj$report() # list of output from RTMB model
     output$params = df # parameter list with parameter names, estimates, and gradients
     output$sdrep = sdrep # sdreport output - parameter estimates and standard errors
