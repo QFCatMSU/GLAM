@@ -10,8 +10,6 @@
 #' @param report_sdrep use sdreport from TMB, get standard errors for parameters
 #' @param run_newton run Newton steps?
 #' @param n_newton number of Newton steps (recommended max = 3)
-#' @param rerun run the model a second time (using parameter estimates from the first run) - set to TRUE (this only works if you have saved a previous run beforehand)
-#' @param newpar use output$newpar to grab parameter estimates from the previous model run 
 #' 
 #' @return list of model diagnostics related to convergence and gradients, model results, and parameter estimates
 #' 
@@ -27,9 +25,7 @@ run_glam = function(nlminb_control = list(
                     hessian_run = FALSE,
                     report_sdrep = TRUE,
                     run_newton = TRUE,
-                    n_newton = 3,
-                    rerun = FALSE,
-                    newpar = NULL) {
+                    n_newton = 3) {
   # mapping fixed parameters and removing bounds if parameter is fixed
   if (!is.null(fixed_names)) {
     fixed_list = list()
@@ -50,32 +46,15 @@ run_glam = function(nlminb_control = list(
   ## ** - will need to incorporate bounds and random effects later
 
   ## Run model ####
-  if(!rerun) {
-    res = try(nlminb(obj$par, obj$fn, obj$gr,
-      control = nlminb_control
-    ))
+  res = try(nlminb(obj$par, obj$fn, obj$gr,
+    control = nlminb_control
+  ))
 
-    # rerun with hessian
-    if(hessian_run) {
-      res = try(nlminb(res$par, obj$fn, obj$gr, obj$he,
-        control = list(abs.tol = 1e4)
-      ))
-    }
-  }
-
-  # rerun
-  if(rerun) {
-    res = try(nlminb(newpar, obj$fn, obj$gr,
+  # rerun with hessian
+  if(hessian_run) {
+    res = try(nlminb(res$par, obj$fn, obj$gr, obj$he,
       control = list(abs.tol = 1e4)
     ))
-    
-    # rerun with hessian
-    if(hessian_run) {
-      res = try(nlminb(res$par, obj$fn, obj$gr, obj$he,
-        control = list(abs.tol = 1e4)
-      ))
-    }
-
   }
 
 
@@ -138,7 +117,6 @@ run_glam = function(nlminb_control = list(
     output$params = df # parameter list with parameter names, estimates, and gradients
     output$sdrep = sdrep # sdreport output - parameter estimates and standard errors
     output$obj = obj # MakeADFun obj/output
-    output$newpar = res$par # new set of parameters for rerun if necesary
 
   return(output)
 }
