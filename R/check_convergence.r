@@ -27,7 +27,7 @@ check_convergence = function(
       gradient = as.numeric(final_gradient),
       parameter_check = c(ifelse(as.numeric(final_gradient) > 0.001, "Bad", "OK"))
     )
-    message("Gradients are high, please improve optimization! (ノಠ益ಠ)ノ彡 ┻━┻")
+    message("Gradients are high, please improve optimization!")
     return(res)
   } else {
     res$whichbad_params = "All parameter gradients look good!"
@@ -41,7 +41,7 @@ check_convergence = function(
   # extract parameters and uncertainty
   res$Hess = optimHess(par = fixed_obj, fn = obj_fn$fn, gr = obj_fn$gr)
   if (is.nan(max(res$Hess))) {
-    res$hess_status = "The hessian was not invertible. (ノಠ益ಠ)ノ彡 ┻━┻"
+    res$hess_status = "The hessian was not invertible."
   } else {
     res$eigen = eigen(res$Hess)
     res$whichbad_eigen = which(res$eigen$values < sqrt(.Machine$double.eps))
@@ -56,7 +56,7 @@ check_convergence = function(
           "Parameter_check" = ifelse(rowmax > 0.001, "Bad", "OK")
           )
     } else {
-      res$whichbad_eigen = "All parameters are identifiable"
+      res$whichbad_eigen = "All parameters are identifiable."
     }
   }
   if(res$convergence == 0 & res$max_gradient < 0.001 & class(res$whichbad_eigen) == "character"){
