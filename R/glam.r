@@ -204,7 +204,15 @@ glam = function(pars) {
   nage[1, 2:(length(log_pop_init) + 1)] = exp(log_pop_init)
 
   for (y in 2:n_years) {
-    log_recr[y] = log_recr_avg + tanh(acor) * (log_recr[y - 1] - log_recr_avg) + log_recr_dev[y - 1]
+    if(recruit_model == "WN") {
+      log_recr[y] = log_recr_avg + log_recr_dev[y - 1]
+    }
+    if(recruit_model == "AR1") {
+      log_recr[y] = log_recr_avg + tanh(acor) * (log_recr[y - 1] - log_recr_avg) + log_recr_dev[y - 1]
+    }
+    if(recruit_model == "RW") {
+      log_recr[y] = log_recr[y - 1] + log_recr_dev[y - 1]
+    }
     log_recr[n_years] = log_recr[n_years - 1]
     nage[y, 1] = exp(log_recr[y])
     for (a in 2:n_ages) {
@@ -347,6 +355,19 @@ glam = function(pars) {
     sd_ct_rec = sig * rho_ct_rec
     sd_q_rec = sig * rho_q_rec
   }
+
+  ## Standardized residuals - ADMB
+  ntrap = ess_trap + 0.001
+  ngill = ess_gill + 0.001
+  denomt = sqrt(((pa_trap * (1-pa_trap)) + 0.000001) /
+                                                (ntrap+0.000001)+0.000001)
+
+  denomg = sqrt(((pa_gill * (1-pa_gill)) + 0.000001) /
+                                                (ngill+0.000001)+0.000001)
+
+  resid_pa_trap = (obs_pa_trap - pa_trap) / denomt
+  resid_pa_gill = (obs_pa_gill - pa_gill) / denomg
+
   # Objective functions
   nlp = 0 # components related to priors and process error
   nll = 0 # components related to data and observation error
@@ -387,16 +408,25 @@ glam = function(pars) {
     if ("log_sel_rec_dev" %in% names(pars)) nlp = nlp + (0.5 / sd_sel^2 * sum(log_sel_rec_dev^2) + (length(log_sel_rec_dev) - 1) * log(sd_sel))
   }
   # recruitment deviations
-  # AR(1)
-  nlp = nlp + (0.5 / sd_recr^2 * sum(log_recr_dev^2) + (length(log_recr_dev) - 1) * log(sd_recr) +
+  if(recruit_model == "WN") {
+    nlp = nlp + (0.5 / sd_recr^2 * sum(log_recr_dev^2) + (length(log_recr_dev) - 1) * log(sd_recr) +
+    0.5  / sd_recr^2 * (log_recr_init - log_recr_avg)^2 + log(sd_recr))
+  }
+  if(recruit_model == "AR1") {
+    nlp = nlp + (0.5 / sd_recr^2 * sum(log_recr_dev^2) + (length(log_recr_dev) - 1) * log(sd_recr) +
     0.5 * (1 - tanh(acor)^2) / sd_recr^2 * (log_recr_init - log_recr_avg)^2 +
     log(sqrt(sd_recr^2 / (1 - tanh(acor)^2))))
+  }
+  if(recruit_model == "RW") {
+    nlp = nlp + (0.5 / sd_recr^2 * sum(log_recr_dev^2) + (length(log_recr_dev) - 1) * log(sd_recr)) 
+  }
 
   jnll = nlp + nll
 
 
   ## 8. Report Section ####
   out = list(
+    nage = rowSums(nage),
     ct_trap = rowSums(ct_trap),
     ct_gill = rowSums(ct_gill),
     biomass_trap = rowSums(biomass_trap),
@@ -406,7 +436,9 @@ glam = function(pars) {
     sel_trap = sel_trap,
     sel_gill = sel_gill,
     pa_trap = pa_trap,
-    pa_gill = pa_gill,    
+    pa_gill = pa_gill,
+    resid_pa_trap = resid_pa_trap,
+    resid_pa_gill = resid_pa_gill,     
     M = M,
     FM_trap = FM_trap,
     FM_gill = FM_gill,
