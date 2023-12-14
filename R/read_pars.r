@@ -1,4 +1,4 @@
-#' @title prep_glam_pars
+#' @title read_pars
 #' 
 #' @description put parameters in list to run for RTMB
 #' 
@@ -26,7 +26,7 @@
 #' @param acor autocorrelation for recruitment deviations
 #' 
 
-prep_glam_pars = function(log_sig,
+read_pars = function(log_sig,
                         log_M,
                         log_q_trap,
                         log_q_gill = NULL,

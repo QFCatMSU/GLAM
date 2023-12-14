@@ -1,4 +1,4 @@
-#' @title prep_glam_data
+#' @title prep_data_excel
 #' 
 #' @description converts data from Excel to R, needs to be in certain format (followed B. Rook's data sheet - MI4_LWF_DAT_10_23_2023)
 #' 
@@ -12,7 +12,7 @@
 #' @param recruit_model recruitment function ("AR1" - autoregressive)
 #' 
 
-prep_glam_data = function(model_name = "GLAM", 
+prep_data_excel = function(model_name = "GLAM", 
                           data_file_name,
                           # fleet_num = 1,
                           sel_type_trap = "logistic",

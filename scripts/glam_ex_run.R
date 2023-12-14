@@ -20,9 +20,7 @@ library(ggplot2)
 source("R/glam.R")
 source("R/run_glam.R")
 source("R/check_convergence.R")
-source("R/rename_data.R")
-source("R/prep_glam_data.R")
-source("R/prep_glam_pars.R")
+source("R/read_pars.R")
 source("R/run_retro.R")
 source("R/run_peel.R")
 source("R/ess_calc.R")
@@ -32,7 +30,7 @@ source("R/ess_calc.R")
 # demo dataset
 load("data/WF_sim_data.Rdata")
 # parameters
-pars = prep_glam_pars(log_sig = -2,
+pars = read_pars(log_sig = -2,
                         log_M = data$log_M_init,
                         log_q_trap = -5,
                         log_q_gill = -5,
