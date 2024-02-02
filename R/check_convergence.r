@@ -25,7 +25,7 @@ check_convergence = function(
       parameters = names(model_res$par),
       MLE = as.numeric(model_res$par),
       gradient = as.numeric(final_gradient),
-      parameter_check = c(ifelse(as.numeric(final_gradient) > 0.001, "Bad", "OK"))
+      parameter_check = c(ifelse(as.numeric(abs(final_gradient)) > 0.001, "Bad", "OK"))
     )
     message("Gradients are high, please improve optimization!")
     return(res)
