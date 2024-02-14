@@ -358,15 +358,16 @@ glam = function(pars) {
 
   ## Standardized residuals - ADMB
   ntrap = ess_trap + 0.001
-  ngill = ess_gill + 0.001
   denomt = sqrt(((pa_trap * (1-pa_trap)) + 0.000001) /
                                                 (ntrap+0.000001)+0.000001)
-
-  denomg = sqrt(((pa_gill * (1-pa_gill)) + 0.000001) /
-                                                (ngill+0.000001)+0.000001)
-
   resid_pa_trap = (obs_pa_trap - pa_trap) / denomt
-  resid_pa_gill = (obs_pa_gill - pa_gill) / denomg
+
+  if(gill_fleet) {
+   ngill = ess_gill + 0.001
+   denomg = sqrt(((pa_gill * (1-pa_gill)) + 0.000001) /
+                                                (ngill+0.000001)+0.000001)
+    resid_pa_gill = (obs_pa_gill - pa_gill) / denomg
+  }
 
   # Objective functions
   nlp = 0 # components related to priors and process error
@@ -431,6 +432,8 @@ glam = function(pars) {
     ct_gill = rowSums(ct_gill),
     biomass_trap = rowSums(biomass_trap),
     biomass_gill = rowSums(biomass_gill),
+    cpue_trap = rowSums(ct_trap)/obs_eff_trap,
+    cpue_gill = rowSums(ct_gill)/obs_eff_gill,
     recr = recr,
     sp_biomass = rowSums(sp_biomass),
     sel_trap = sel_trap,
@@ -438,7 +441,7 @@ glam = function(pars) {
     pa_trap = pa_trap,
     pa_gill = pa_gill,
     resid_pa_trap = resid_pa_trap,
-    resid_pa_gill = resid_pa_gill,     
+    resid_pa_gill = resid_pa_gill,    
     M = M,
     FM_trap = FM_trap,
     FM_gill = FM_gill,
